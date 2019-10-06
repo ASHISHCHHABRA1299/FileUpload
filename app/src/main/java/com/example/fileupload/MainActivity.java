@@ -110,13 +110,14 @@ public class MainActivity extends AppCompatActivity {
         dialog.setProgress(0);
         dialog.show();
         final String name=System.currentTimeMillis()+"";
-        final StorageReference storageReference=storage.getReference();//return the root path
+         final StorageReference storageReference=storage.getReference();//return the root path
         storageReference.child("uploads").child(name).putFile(pdfuri)
         .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                String url=storageReference.getDownloadUrl().toString();  //return the url of your uploaded file
+//                String url= storageReference.getDownloadUrl().toString();  //return the url of your uploaded file
                 //store the url in the realtime database
+                String url=taskSnapshot.getStorage().getDownloadUrl().toString();
                 DatabaseReference databaseReference=database.getReference();//return the path to root
                 databaseReference.child(name).setValue(url).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
@@ -124,10 +125,12 @@ public class MainActivity extends AppCompatActivity {
                         if(task.isSuccessful())
                         {
                             Toast.makeText(MainActivity.this,"FILE SUCCESSFULLY UPLOADED",Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
                         }
                         else
                         {
                             Toast.makeText(MainActivity.this,"FILE NOT SUCCESSFULLY UPLOADED",Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
                         }
                     }
                 });
@@ -139,14 +142,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Toast.makeText(MainActivity.this,"FILE NOT SUCCESSFULLY UPLOADED",Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                 //track the progress of the file upload
 
-                 int currentprogress=(int)(100*taskSnapshot.getBytesTransferred()/taskSnapshot.getTotalByteCount());
-                 dialog.setProgress(currentprogress);
+                 double currentprogress=(100*taskSnapshot.getBytesTransferred()/taskSnapshot.getTotalByteCount());
+                dialog.setMessage("Uploaded: " + (int) currentprogress + "%");
+                dialog.setProgress((int)currentprogress);
+
 
 
             }
